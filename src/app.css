@@ -1,0 +1,17 @@
+#import url('https://fonts.googleapis.com/css?family=Tangerine')
+
+body{
+    background-color: black;
+}
+
+.App{
+    background-color: lightcyan;
+    font-family: "Playwrite AT", cursive;
+    border-radius: 15px;
+    padding: 1em;
+}
+
+.sigma-container {
+    width: 100%;
+    height: 750px;
+}
