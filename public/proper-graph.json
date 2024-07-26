@@ -1,0 +1,11 @@
+{
+    "nodes": [
+      { "key": "n0", "attributes": { "label": "Node 1", "x": 0.123, "y": 0.456, "size": 10} },
+      { "key": "n1", "attributes": { "label": "Node 2", "x": 0.789, "y": 0.012, "size": 10 } },
+      { "key": "n2", "attributes": { "label": "Node 3", "x": 0.345, "y": 0.678, "size": 10 } }
+    ],
+    "edges": [
+      { "key": "e0", "source": "n0", "target": "n1", "attributes": {} },
+      { "key": "e1", "source": "n1", "target": "n2", "attributes": {} }
+    ]
+  }

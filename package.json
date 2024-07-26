@@ -13,6 +13,7 @@
     "@react-sigma/core": "^4.0.2",
     "@react-sigma/layout-circular": "^4.0.3",
     "@react-sigma/layout-noverlap": "^4.0.3",
+    "axios": "^1.7.2",
     "graphology": "^0.25.4",
     "graphology-layout": "^0.6.1",
     "graphology-layout-force": "^0.2.4",

@@ -5,8 +5,7 @@ body{
 }
 
 .App{
-    background-color: lightcyan;
-    font-family: "Playwrite AT", cursive;
+    background-color: rgb(255, 255, 255);
     border-radius: 15px;
     padding: 1em;
 }

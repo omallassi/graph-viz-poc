@@ -1,50 +1,100 @@
 import React, {useEffect, useRef} from "react";
-import { SigmaContainer, useSigma } from "@react-sigma/core";
+import { SigmaContainer, useLoadGraph, useSigma } from "@react-sigma/core";
 import Graph from "graphology";
 import circularLayout from "graphology-layout/circular";
 import random from 'graphology-layout/random';
 import forceLayout from 'graphology-layout-force';
+import axios from 'axios';
 
 import { ControlsContainer, ZoomControl, SearchControl, FullScreenControl } from "@react-sigma/core";
+
+const createMultiGraph = () => {
+    const graph = new Graph({ multi: true });
+    //in fact the multi graph does not work this way 
+    // refer to https://sim51.github.io/react-sigma/docs/example/load-graph/ (search for multi)
+  
+    // Adding nodes
+    for (let i = 0; i < 10; i++) {
+      graph.addNode(`n${i}`, { label: `Node ${i}`, x: Math.random(), y: Math.random(), size: 10 });
+      //graph.addNode('n5', { label: 'Nina Simone : 1933', size: 25, color: 'orange' });
+    }
+  
+    // Adding multiple edges between the same nodes
+    for (let i = 0; i < 20; i++) {
+      const source = `n${Math.floor(Math.random() * 10)}`;
+      const target = `n${Math.floor(Math.random() * 10)}`;
+      graph.addEdgeWithKey(`e${i}-1`, source, target, { label: `Edge ${i}-1` });
+    }
+  
+    return graph;
+  };
 
 const GraphComponent = () => {
     const sigma = useSigma();
     const containerRef = useRef(null);
 
+    const loadGraph = useLoadGraph();
+
     useEffect(() => {
-        const graph = new Graph({
-            multi: true
+
+        // axios.get('/graph.json').then(response => {
+
+        //     const graphData = response.data;
+
+        //     if (!Array.isArray(graphData.nodes) || !Array.isArray(graphData.edges)) {
+        //     throw new Error('Invalid graph data format');
+        //     }
+
+        //     const graph = new Graph( {multi: true} );
+            
+        //     graphData.nodes.forEach((node, index) => {
+        //     const key = node.key || `n${index}`;
+        //     const x =  node.x !== undefined ? node.x : Math.random();
+        //     const y = node.y !== undefined ? node.y : Math.random();
+        //     graph.addNode(key, {...node, x, y, size:10});
+        //     });
+
+        //     // Ensure each edge has a unique key
+        //     graphData.edges.forEach( (edge, index) => {
+        //         const key = edge.key || `e${index}`;
+        //         //graph.addEdgeWithKey(key, edge.source, edge.target, {...edge});
+        //         graph.addEdge(edge.source, edge.target, {...edge});
+        //     });
+            
+        //     console.log('Raw graph data:', graph);
+
+        //     loadGraph(graph, true);
+        // })
+        // .catch(error => {
+        //     console.error('Error fetching the graph data', error);
+        // });
+
+        axios.get('/proper-graph.json').then(response => {
+
+            const graphData = response.data;
+
+            if (!Array.isArray(graphData.nodes) || !Array.isArray(graphData.edges)) {
+            throw new Error('Invalid graph data format');
+            }
+
+            const graph = new Graph( {multi: true} );
+            graph.import( {
+                nodes: graphData.nodes,
+                edges: graphData.edges,
+            } ),
+            
+            console.log('Raw graph data:', graph.nodes);
+            console.log('Raw graph data:', graph.edges);
+
+            loadGraph(graph, true);
+        })
+        .catch(error => {
+            console.error('Error fetching the graph data', error);
         });
-        // Add nodes
-        graph.addNode('n1', { label: 'Ella Fitzgerald: 1917', size: 25, color: 'red', age: 24, contributor: 'trade' });
-        graph.addNode('n2', { label: 'Frank Sinatra: 1915', size: 25, color: 'red' });
-        graph.addNode('n3', { label: 'Billie Holiday: 1915', size: 25, color: 'red' });
-        graph.addNode('n4', { label: 'Louis Armstrong:1901 ', size: 25, color: 'yellow' });
-        graph.addNode('n5', { label: 'Nina Simone : 1933', size: 25, color: 'orange' });
-        graph.addNode('n6', { label: 'Nat King Cole : 1919', size: 25, color: 'red' });
-        graph.addNode('n7', { label: 'Gregory Porter : 1971', size: 25, color: 'teal' });
-        graph.addNode('n8', { label: 'Sarah Vaughan : 1924', size: 25, color: 'orange' });
-        graph.addNode('n9', { label: ' Michael Bublé : 1975', size: 25, color: 'teal' });
 
-        // Add edges - GROUPED / LINKED DECADES
-        graph.addEdge('n1', 'n2');
-        graph.addEdge('n1', 'n3');
-        graph.addEdge('n1', 'n6');
-        graph.addEdge('n2', 'n1');
-        graph.addEdge('n3', 'n1');
-        graph.addEdge('n5', 'n8');
-        graph.addEdge('n7', 'n9');
-        //graph.addEdgeWithKey("rel1", "n7", "n9", { label: "REL_1" });
-        graph.addEdge("n7", "n9", { label: "REL_1", color: 'red' });
+    }, [loadGraph]);
 
-        random.assign(graph);
-        if(sigma){
-            sigma.setGraph(graph);
-            sigma.refresh();
-        }
-    }, [sigma]);
-
-    return <div ref={containerRef}/>;
+    return null;
 };
 
 const GraphWrapper = () => (
