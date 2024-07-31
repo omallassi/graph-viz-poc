@@ -1,5 +1,5 @@
 import React, {useEffect, useState, useRef, useMemo} from "react";
-import { SigmaContainer, useLoadGraph, useRegisterEvents, useSigma } from "@react-sigma/core";
+import { SigmaContainer, useLoadGraph, useRegisterEvents, useSigma, useSetSettings} from "@react-sigma/core";
 import Graph from "graphology";
 import circularLayout from "graphology-layout/circular";
 import random from 'graphology-layout/random';
@@ -21,6 +21,9 @@ const GraphComponent = ( {layout, cipher_query, onNodeClick} ) => {
     const layoutNoverlap = useLayoutNoverlap();
     const layoutCirclepack = useLayoutCirclepack();
     const layoutForce = useLayoutForce({ maxIterations: 100 });
+    const setSettings = useSetSettings();
+
+    const [hoveredNode, setHoveredNode] = useState(null);
 
     const layouts = useMemo( () => {
         return {
@@ -86,8 +89,38 @@ const GraphComponent = ( {layout, cipher_query, onNodeClick} ) => {
             //     console.warn("click", event.x, event.y);
             //     onNodeClick(event.x, event.y);
             // },
+            enterNode: (event) => setHoveredNode(event.node),
+            leaveNode: (event) => setHoveredNode(null),
         });
     }, [registerEvents]);
+
+    useEffect(() => {
+        setSettings({
+            nodeReducer: (node, data) => {
+                const graph = sigma.getGraph();
+                const newData = { ...data, highlighted: data.highlighted || false };
+        
+                if (hoveredNode) {
+                  if (node === hoveredNode || graph.neighbors(hoveredNode).includes(node)) {
+                    newData.highlighted = true;
+                  } else {
+                    newData.color = "#E2E2E2";
+                    newData.highlighted = false;
+                  }
+                }
+                return newData;
+              },
+              edgeReducer: (edge, data) => {
+                const graph = sigma.getGraph();
+                const newData = { ...data, hidden: false };
+        
+                if (hoveredNode && !graph.extremities(edge).includes(hoveredNode)) {
+                  newData.hidden = true;
+                }
+                return newData;
+              },
+        });
+    }, [hoveredNode, setSettings, sigma]);
 
     return null;
 };
