@@ -13,6 +13,8 @@ import EdgeCurveProgram, { DEFAULT_EDGE_CURVATURE, indexParallelEdgesIndex } fro
 
 import { ControlsContainer, ZoomControl, SearchControl, FullScreenControl } from "@react-sigma/core";
 
+import "@react-sigma/core/lib/react-sigma.min.css";
+
 const sigmaSettings = { allowInvalidContainer: true };
 
 const GraphComponent = ( {layout, cipher_query, onNodeClick} ) => {
@@ -22,6 +24,7 @@ const GraphComponent = ( {layout, cipher_query, onNodeClick} ) => {
     const layoutCirclepack = useLayoutCirclepack();
     const layoutForce = useLayoutForce({ maxIterations: 100 });
     const setSettings = useSetSettings();
+    const [draggedNode, setDraggedNode] = useState(null);
 
     const [hoveredNode, setHoveredNode] = useState(null);
 
@@ -91,8 +94,31 @@ const GraphComponent = ( {layout, cipher_query, onNodeClick} ) => {
             // },
             enterNode: (event) => setHoveredNode(event.node),
             leaveNode: (event) => setHoveredNode(null),
+            //the following events will handle the drag & drop
+            downNode: (event) => {
+                setDraggedNode(event.node);
+                sigma.getGraph().setNodeAttribute(event.node, "highlighted", true);
+            },
+            mousemovebody: (event) => {
+                if (!draggedNode) return; //there is no selected node
+
+                //get the new position of the node
+                const pos = sigma.viewportToGraph(event);
+                sigma.getGraph().setNodeAttribute(draggedNode, "x", pos.x);
+                sigma.getGraph().setNodeAttribute(draggedNode, "y", pos.y);
+                //avoid having all the graph moving with the node
+                event.preventSigmaDefault();
+                event.original.preventDefault();
+                event.original.stopPropagation();
+            },
+            mouseup: () => {
+                if(draggedNode){
+                    setDraggedNode(null);
+                    sigma.getGraph().removeNodeAttribute(draggedNode, "highlighted");
+                }
+            },
         });
-    }, [registerEvents]);
+    }, [registerEvents, draggedNode]);
 
     useEffect(() => {
         setSettings({
@@ -155,17 +181,20 @@ const GraphWrapper = () => {
                     <button onClick={ () => setLayout("force") } >force</button>
                 </div>
                         
-                <SigmaContainer settings={sigmaSettings}>
+                <SigmaContainer settings={sigmaSettings} style={{ width: "100%", height: "800px"}}>
                         <GraphComponent layout={layout} cipher_query='graph-30' onNodeClick={onNodeClick}/>
                         <ControlsContainer position={"top-right"}>
                             <ZoomControl/>
                             <FullScreenControl/>
                         </ControlsContainer>
+                        <ControlsContainer position={"top-right"}>
+                            <SearchControl style={{width: "200px"}} />
+                        </ControlsContainer>
                 </SigmaContainer>
             </div>
-            <SigmaContainer settings={sigmaSettings}>
+            <SigmaContainer settings={sigmaSettings} style={{ width: "100%", height: "800px"}}>
                     <GraphComponent layout={layout} cipher_query='graph-35' onNodeClick={onNodeClick}/>
-                    <ControlsContainer position={"top-right"}>
+                    <ControlsContainer position={"bottom-right"}>
                         <ZoomControl/>
                         <FullScreenControl/>
                     </ControlsContainer>
