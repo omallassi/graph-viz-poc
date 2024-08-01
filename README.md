@@ -18,7 +18,5 @@ assuming you need to generate a graph (to update the current `/public/graph*.jso
 
 `npm start` will do the job 
 
-
-
-
+![...](./docs/overview.png)
 

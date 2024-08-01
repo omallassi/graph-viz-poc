@@ -17,7 +17,7 @@ import "@react-sigma/core/lib/react-sigma.min.css";
 
 const sigmaSettings = { allowInvalidContainer: true };
 
-const GraphComponent = ( {layout, cipher_query, onNodeClick} ) => {
+const GraphComponent = ( {layout, cipher_query, onNodeClick, display_diff} ) => {
     const sigma = useSigma();
     const loadGraph = useLoadGraph();
     const layoutNoverlap = useLayoutNoverlap();
@@ -50,7 +50,7 @@ const GraphComponent = ( {layout, cipher_query, onNodeClick} ) => {
             const graphData = response.data;
 
             if (!Array.isArray(graphData.nodes) || !Array.isArray(graphData.edges)) {
-            throw new Error('Invalid graph data format');
+                throw new Error('Invalid graph data format');
             }
 
             const graph = new Graph( {multi: true} );
@@ -63,6 +63,32 @@ const GraphComponent = ( {layout, cipher_query, onNodeClick} ) => {
             console.log('Raw graph data:', graph.edges);
 
             loadGraph(graph, true);
+            // get and render the diff 
+            if (display_diff){
+                axios.get('/graph-diff.json').then(response => {
+                    const diff = response.data;
+                    for (let index = 0; index < diff.updated.length; index++){
+                        sigma.getGraph().setNodeAttribute(diff.updated[index], "color", "#FFA500")
+                        console.log("updated " + diff.updated[index])
+                    }
+                    //will add the new nodes - should also add the edges but 
+                    for (let index = 0; index < diff.added.length; index++){
+                        if (sigma.getGraph().hasNode(diff.added[index])){
+                            sigma.getGraph().setNodeAttribute(diff.added[index], "color", "#32CD32")
+                            console.log("added update " + diff.added[index])
+                        }
+                        else{
+                            sigma.getGraph().addNode(diff.added[index], {label: `Node ${diff.added[index]}`, x:  Math.random(), y:  Math.random(), size: 20, color: "#32CD32"})
+                            console.log("added " + diff.added[index])
+                            sigma.refresh();
+                        }
+                    }
+                    //shoudl display the deleted ones in red
+                }
+                ).catch(error => {
+                    console.error('Error fetching the diff data', error);
+                })
+            }
         })
         .catch(error => {
             console.error('Error fetching the graph data', error);
@@ -171,7 +197,14 @@ const GraphWrapper = () => {
         <div ref={containerRef}>
             <div>
                 {selectedNode && (
-                    <div>
+                    <div style={ {
+                        backgroundColor: 'lightblue',
+                        padding: '20px',
+                        borderRadius: '10px',
+                        textAlign: 'left',
+                        fontSize: '20px',
+                        color: 'darkblue',
+                      } }>
                         Selected node : id [{selectedNode.id}], x [{selectedNode.x}], y [{selectedNode.y}], [{JSON.stringify(selectedNode.attributes)}]
                     </div>
                 )}
@@ -193,11 +226,14 @@ const GraphWrapper = () => {
                 </SigmaContainer>
             </div>
             <SigmaContainer settings={sigmaSettings} style={{ width: "100%", height: "800px"}}>
-                    <GraphComponent layout={layout} cipher_query='graph-35' onNodeClick={onNodeClick}/>
+                    <GraphComponent layout={layout} cipher_query='graph-35' onNodeClick={onNodeClick} display_diff="true"/>
                     <ControlsContainer position={"bottom-right"}>
                         <ZoomControl/>
                         <FullScreenControl/>
                     </ControlsContainer>
+                    <ControlsContainer position={"top-right"}>
+                            <SearchControl style={{width: "200px"}} />
+                        </ControlsContainer>
                     <div>
                         <button onClick={ () => setLayout("circlepack") } >circlepack</button>
                         <button onClick={ () => setLayout("noverlaps") } >noverlaps</button>
